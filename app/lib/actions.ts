@@ -27,10 +27,15 @@ export async function createInvoice(formData: FormData) {
   // It's usually good practice to store monetary values in cents in your database to eliminate JavaScript floating-point errors and ensure greater accuracy.
   const amountInCents = amount * 100
   const date = new Date().toISOString().split('T')[0]
-  await sql`
+
+  try {
+    await sql`
     INSERT INTO invoices (customer_id, amount, status, date)
     VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
   `
+  } catch (error) {
+    console.error(error)
+  }
 
   // Once the database has been updated, the /dashboard/invoices path will be revalidated, and fresh data will be fetched from the server.
   revalidatePath('/dashboard/invoices')
@@ -46,13 +51,18 @@ export async function updateInvoice(id: string, formData: FormData) {
     status: formData.get('status'),
   })
   const amountInCents = amount * 100
-  await sql`
+  try {
+    await sql`
     UPDATE invoices
     SET customer_id = ${customerId},
         amount = ${amountInCents},
         status = ${status}
     WHERE id = ${id}
   `
+  } catch (error) {
+    console.error(error)
+  }
+
   revalidatePath('/dashboard/invoices')
   redirect('/dashboard/invoices')
 }
